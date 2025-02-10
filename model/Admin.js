@@ -1,11 +1,33 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
+const sequelize = require('../database/Nutrisphere');
 
-const Admin = sequelize.define('Admin', {
-  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
-  name: { type: DataTypes.STRING, allowNull: false },
-  email: { type: DataTypes.STRING, unique: true, allowNull: false },
-  password: { type: DataTypes.STRING, allowNull: false },
-});
+// Define the Admin model
+const Admin = sequelize.define(
+  'Admin',
+  {
+    admin_id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    admin_name: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING(255),
+      unique: true,
+      allowNull: false,
+    },
+    password: {
+      type: DataTypes.STRING(255),
+      allowNull: false,
+    },
+  },
+  {
+    tableName: 'admins', // Optional: Specify table name
+    timestamps: false,  // Disable createdAt/updatedAt if not needed
+  }
+);
 
 module.exports = Admin;

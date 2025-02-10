@@ -1,4 +1,4 @@
-const Test= require('../model/Test') //importing a model
+const Test= require('../model/Admin') //importing a model
 
 // create function to get all test users
 const getTest = async (requestAnimationFrame, res) => {
