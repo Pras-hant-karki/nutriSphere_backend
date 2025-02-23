@@ -1,27 +1,42 @@
-const { DataTypes } = require("sequelize");
-const sequelize = require("../database/Nutrisphere");
+// models/User.js
+const { DataTypes } = require('sequelize');
+const sequelize=require('../database/database')
+const bcrypt = require('bcryptjs');
 
-// Define the User model
-const User = sequelize.define(
-  'User',
-  {
-    user_id: {
+
+const User = sequelize.define('User', {
+    id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: true
     },
-    user_name: {
-      type: DataTypes.STRING(255),
+    username: {
+      type: DataTypes.STRING,
       allowNull: false,
+      unique: true
+    },
+    fullname: {
+      type: DataTypes.STRING,
+      allowNull: false
     },
     email: {
-      type: DataTypes.STRING(255),
-      unique: true,
+      type: DataTypes.STRING,
       allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true
+      }
+    },
+    image: {
+      type: DataTypes.STRING,
+      defaultValue: null
     },
     password: {
-      type: DataTypes.STRING(255),
+      type: DataTypes.STRING,
       allowNull: false,
+      validate: {
+        len: [8, Infinity]
+      }
     },
     age: {
       type: DataTypes.INTEGER,
@@ -31,11 +46,42 @@ const User = sequelize.define(
       type: DataTypes.STRING(10),
       allowNull: true,
     },
-  },
-  {
-    tableName: 'users',
-    timestamps: false,
-  }
-);
+    role: {
+      type: DataTypes.ENUM('user', 'admin'), // ENUM to differentiate roles
+      allowNull: false,
+      defaultValue: 'user' // Default role is 'user'
+    },
+    phoneNumber: {
+      type: DataTypes.STRING,
+      unique: true,
+      allowNull: true
+    }
+  }, {
+    // Model options
+    timestamps: true,
+    
+    // Instance methods
+    instanceMethods: {
+      toJSON() {
+        const values = { ...this.get() };
+        delete values.__v;
+        values.id = values.id.toString();
+        return values;
+      }
+    }
+  });
+
+  // Define associations
+User.associate = (models) => {
+    User.hasMany(models.ExchangeRequest, {
+      foreignKey: 'requesterId',
+      as: 'exchangedRequests'
+    });
+    
+    User.belongsToMany(models.Book, {
+      through: 'UserBookmarks',
+      as: 'bookmarkedBooks'
+    });
+  };
 
 module.exports = User;
