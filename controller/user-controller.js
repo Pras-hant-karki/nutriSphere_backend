@@ -1,36 +1,39 @@
-const User = require('../model/User')
-const jwt= require('jsonwebtoken')
-const bcrypt= require ('bcrypt');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const  User = require('../models/User');
+const { Op } = require('sequelize');
 
-
-
-const registerUser=async(req,res)=>{
-    const {username,password}=req.body;
-    if(!username || !password){
-        return res.status(400).json({
-            error:"Insert the username and password"
-        });
+const registerUser = async (req, res, next) => {
+    const { username, password, fullname, email } = req.body;
+  
+    try {
+      const existingUser = await User.findOne({ where: { username } });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Duplicate username' });
+      }
+  
+      if (!username || !password || !fullname || !email) {
+        return res.status(400).json({ error: 'Please fill in all fields' });
+      }
+  
+      if (!email.includes('@') || !email.includes('.')) {
+        return res.status(400).json({ error: 'Please enter a valid email' });
+      }
+  
+      const hashedPassword = await bcrypt.hash(password, 10);
+  
+      await User.create({
+        username,
+        password: hashedPassword,
+        fullname,
+        email
+      });
+  
+      res.status(201).json({ status: 'success', message: 'User created' });
+    } catch (error) {
+      next(error);
     }
-    try{
-        const existingUser=await User.findOne({where : {username}})
-        
-        if(existingUser){
-            return res.status(400).json( {error:"Username already exists"})
-               
-        }
-        // Hash the password
-        const saltRounds =10;
-        const hashPassword= await bcrypt.hash(password,saltRounds)
-
-        // Create new user
-        const newUser=await User.create({username,password:hashPassword})
-        res.status(201).json({message: "Registration Sucessful......................"})
-    }
-    catch(error){
-        res.status(500).json({error:  "Something went wrong........................."})
-        console.log(error)
-    }
-}
+  };
 
 const loginUser=async(req,res)=>{
     const{username,password}=req.body
