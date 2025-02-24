@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const user_routes = require("./routes/user-routes");
+const posts_routes = require("./routes/post-routes");
 
 const sequelize = require("./database/database");
 
@@ -15,6 +16,7 @@ app.use(express.json());
 app.use(express.static("public"));
 
 app.use("/users", user_routes);
+app.use("/posts", verifyUser, posts_routes);
 
 
 sequelize

@@ -4,139 +4,171 @@ const  User = require('../models/User');
 const { Op } = require('sequelize');
 
 const registerUser = async (req, res, next) => {
-    const { username, password, fullname, email } = req.body;
-  
-    try {
+  const { username, password, fullname, email } = req.body;
+
+  try {
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Duplicate username' });
+    }
+
+    if (!username || !password || !fullname || !email) {
+      return res.status(400).json({ error: 'Please fill in all fields' });
+    }
+
+    if (!email.includes('@') || !email.includes('.')) {
+      return res.status(400).json({ error: 'Please enter a valid email' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await User.create({
+      username,
+      password: hashedPassword,
+      fullname,
+      email
+    });
+
+    res.status(201).json({ status: 'success', message: 'User created' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const loginUser = async (req, res, next) => {
+  const { username, password } = req.body;
+
+  try {
+    const user = await User.findOne({ where: { username } });
+    if (!user) {
+      return res.status(400).json({ error: 'User is not registered' });
+    }
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Please fill in all fields' });
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ error: 'Password does not match' });
+    }
+
+    const payload = {
+      id: user.id,
+      username: user.username,
+      fullname: user.fullname
+    };
+
+    jwt.sign(payload, process.env.SECRET, { expiresIn: '1d' }, (err, token) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      res.json({ status: 'success', token: token });
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getUserProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    res.json({
+      data: [user]
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateUserProfile = async (req, res, next) => {
+  const userId = req.user.id;
+  const { username, fullname, email, bio, phoneNumber } = req.body;
+
+  try {
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Build update object
+    const updates = {};
+    
+    if (username && username !== user.username) {
       const existingUser = await User.findOne({ where: { username } });
       if (existingUser) {
-        return res.status(400).json({ error: 'Duplicate username' });
+        return res.status(400).json({ error: 'Username is already taken' });
       }
-  
-      if (!username || !password || !fullname || !email) {
-        return res.status(400).json({ error: 'Please fill in all fields' });
+      updates.username = username;
+    }
+
+    if (email && email !== user.email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email is already taken' });
       }
-  
-      if (!email.includes('@') || !email.includes('.')) {
-        return res.status(400).json({ error: 'Please enter a valid email' });
+      updates.email = email;
+    }
+
+    if (phoneNumber && phoneNumber !== user.phoneNumber) {
+      const existingUser = await User.findOne({ where: { phoneNumber } });
+      if (existingUser) {
+        return res.status(400).json({ error: 'Phone number is already taken' });
       }
-  
-      const hashedPassword = await bcrypt.hash(password, 10);
-  
-      await User.create({
-        username,
-        password: hashedPassword,
-        fullname,
-        email
-      });
-  
-      res.status(201).json({ status: 'success', message: 'User created' });
-    } catch (error) {
-      next(error);
+      updates.phoneNumber = phoneNumber;
     }
-  };
 
-const loginUser=async(req,res)=>{
-    const{username,password}=req.body
+    if (fullname) updates.fullname = fullname;
+    if (bio !== undefined) updates.bio = bio;
 
-    if(!username || !password){
-        return res.status(400).json({
-            error:"Insert the username and password"
-        });
-    }
-    try{
-
-        // Finding User by username
-        const user= await User.findOne({where:{username}})
-        if(!user){
-           return res.status(400).json({error:"User not found"})
-        
-        }
-
-        const isMatch = await bcrypt.compare(password,user.password)
-
-
-        if (!isMatch){
-            return res.status(400).json({error:"Password didnt match"})
-        }
-
-
-
-        const token = jwt.sign(
-            {id: user.id, username:user.username},
-            process.env.JWT_SECRET || 'KJAHGHFYRIYQIULUO8714679HI4Y189UOHJWBJ',
-            {expiresIn:'24h'}
-    )
-    res.status(200).json({message : "Sucessfully Logged In........................."},
-        token)
-
-
-    }
-    catch(error){
-        res.status(500).json({error:  "Something went wrong........................."})
-        console.log(error)
-    }
-}
-
-
-
-module.exports= {loginUser,registerUser}
-
-
-const getUser = async(req, res)=>{
-
-    try{
-        const tests = await User.findAll();
-        res.status(200).json(tests);
-
-    }
-    catch(error){
-        res.status(500).json({error: "Failed to Load"})
-    }
-}
-
-const createUser = async(req, res)=>{
+    // Update user
+    await user.update(updates);
     
-    try{
-        
-const {username,email, password} = req.body;
+    const updatedUser = await User.findByPk(userId);
+    res.json({
+      data: [updatedUser]
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-//Hash the password
-const newtest = await User.create({username,email, password})
+const uploadImage = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ message: 'Please upload a file' });
+  }
 
-res.status(200).json(newtest);
-    }
-    catch(error){
-        res.status(500).json({error: "Failed to Load Users"})
-        console.log(error)
-    }
+  try {
+    const userId = req.user.id;
+    const image = req.file.filename;
 
-}
+    await User.update(
+      { image },
+      { where: { id: userId } }
+    );
 
-const updateUser = async(req, res)=>{
-    try {
-        const user = await User.findByPk(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        await user.update(req.body);
-        res.json(user);
-    } catch (err) {
-        res.status(400).json({ error: err.message });
-    }
-}
+    res.status(200).json({
+      success: true,
+      data: image
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update the user\'s profile picture'
+    });
+  }
+};
 
-const deleteUser = async(req, res)=>{
-    try {
-        const user = await User.findByPk(req.params.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        await user.destroy();
-        res.json({ message: 'User deleted' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-}
-
-
-module.exports = {createUser, getUser, deleteUser, updateUser}
+module.exports = {
+  registerUser,
+  loginUser,
+  getUserProfile,
+  updateUserProfile,
+  uploadImage
+};
