@@ -18,8 +18,6 @@ router.post(
   postController.uploadPostCover
 );
 
-// Get posts uploaded by others
-router.get("/others", verifyUser, postController.getPostsUploadedByOthers);
 
 // Get posts uploaded by current user
 router.get(
