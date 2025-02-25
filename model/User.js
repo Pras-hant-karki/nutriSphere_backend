@@ -61,27 +61,8 @@ const User = sequelize.define('User', {
     timestamps: true,
     
     // Instance methods
-    instanceMethods: {
-      toJSON() {
-        const values = { ...this.get() };
-        delete values.__v;
-        values.id = values.id.toString();
-        return values;
-      }
-    }
+   
   });
 
-  // Define associations
-User.associate = (models) => {
-    User.hasMany(models.ExchangeRequest, {
-      foreignKey: 'requesterId',
-      as: 'exchangedRequests'
-    });
-    
-    User.belongsToMany(models.Book, {
-      through: 'UserBookmarks',
-      as: 'bookmarkedBooks'
-    });
-  };
 
 module.exports = User;

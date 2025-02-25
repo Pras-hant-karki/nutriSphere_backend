@@ -24,10 +24,5 @@ router.put("/edit-profile", verifyUser, userController.updateUserProfile);
 // Upload image
 router.post("/uploadImage", verifyUser, upload, userController.uploadImage);
 
-// Get all exchange requests for a user
-router.get(
-  "/:user_id/exchange-requests",
-  userController.getAllExchangeRequests
-);
 
 module.exports = router;
