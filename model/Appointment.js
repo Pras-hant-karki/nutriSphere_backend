@@ -1,40 +1,35 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../database/Nutrisphere');
+const sequelize = require('../database/database');
+const User=require('../models/User')
 
-// Define the Appointment model
-const Appointment = sequelize.define(
-    'Appointment',
-    {
-      app_id: {
+
+const Appointment = sequelize.define('Appointment', {
+    id: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
-      },
-      date: {
-        type: DataTypes.DATE,
-        allowNull: false,
-      },
-      time: {
-        type: DataTypes.TIME,
-        allowNull: false,
-      },
-      app_status: {
-        type: DataTypes.STRING(50),
-        defaultValue: 'pending',
-      },
-      user_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
-      admin_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
+        autoIncrement: true
     },
-    {
-      tableName: 'appointments',
-      timestamps: false,
+    userId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Users', // Referencing the User model
+            key: 'id'
+        }
+    },
+    status: {
+        type: DataTypes.ENUM('pending', 'accepted', 'rejected'),
+        defaultValue: 'pending'
+    },
+    requestedDate: {
+        type: DataTypes.DATE,
+        allowNull: false
     }
-  );
-  
-  module.exports = Appointment;
+}, {
+    timestamps: true
+});
+// Define the belongsTo relationship with a custom alias
+
+Appointment.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
+module.exports = Appointment;
