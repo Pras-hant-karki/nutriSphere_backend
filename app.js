@@ -2,12 +2,12 @@ require("dotenv").config();
 const express = require("express");
 const user_routes = require("./routes/user-routes");
 const posts_routes = require("./routes/post-routes");
-
+const appointment_routes = require("./routes/appointment-routes");
 const sequelize = require("./database/database");
 
 
 const cors = require("cors");
-
+const { verifyUser } = require("./middlewares/auth");
 
 const app = express();
 
@@ -17,6 +17,7 @@ app.use(express.static("public"));
 
 app.use("/users", user_routes);
 app.use("/posts", verifyUser, posts_routes);
+app.use("/appointment", appointment_routes);
 
 
 sequelize
