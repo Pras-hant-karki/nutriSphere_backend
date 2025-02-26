@@ -89,3 +89,99 @@ exports.getRequestById = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+// User can update their request if it's still pending
+exports.updateRequest = async (req, res) => {
+  try {
+    const { height, weight, age, goal } = req.body;
+    const requestId = req.params.id;
+    const userId = req.user.id;
+
+    const request = await WorkoutRequest.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ message: "Workout request not found" });
+    }
+
+    if (request.userId !== userId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ message: "Cannot update a completed request" });
+    }
+
+    request.height = height;
+    request.weight = weight;
+    request.age = age;
+    request.goal = goal;
+    await request.save();
+
+    res.status(200).json({
+      message: "Workout request updated successfully",
+      request,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// User can delete their request if it's still pending
+exports.deleteRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const userId = req.user.id;
+
+    const request = await WorkoutRequest.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ message: "Workout request not found" });
+    }
+
+    if (request.userId !== userId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    if (request.status !== "pending") {
+      return res.status(400).json({ message: "Cannot delete a completed request" });
+    }
+
+    await request.destroy();
+
+    res.status(200).json({ message: "Workout request deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// Admin responds with a workout plan
+exports.respondToRequest = async (req, res) => {
+  try {
+    const { workoutPlan } = req.body;
+    const requestId = req.params.id;
+
+    const request = await WorkoutRequest.findByPk(requestId);
+    if (!request) {
+      return res.status(404).json({ message: "Workout request not found" });
+    }
+
+    request.workoutPlan = workoutPlan;
+    request.status = "completed";
+    await request.save();
+
+    res.status(200).json({
+      message: "Workout plan submitted successfully",
+      request,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+
+exports.getAllRequests = async (req, res) => {
+    try {
+        const requests = await WorkoutRequest.findAll();
+        res.status(200).json(requests);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
