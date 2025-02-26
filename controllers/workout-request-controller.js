@@ -55,4 +55,37 @@ exports.getPendingRequests = async (req, res) => {
       res.status(500).json({ error: error.message });
     }
   };
- 
+  
+  // Get all completed (responded) requests (Admin sees all, User sees only their own)
+  exports.getCompletedRequests = async (req, res) => {
+    try {
+      const whereCondition = req.user.role === "admin"
+        ? { status: "completed" }
+        : { userId: Number(req.user.id), status: "completed" }; // Ensure userId is a number
+  
+      const requests = await WorkoutRequest.findAll({ where: whereCondition });
+  
+      res.status(200).json(requests);
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  };
+  
+// Get a single workout request by ID (Only owner or admin)
+exports.getRequestById = async (req, res) => {
+  try {
+    const request = await WorkoutRequest.findByPk(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    // Ensure that only the owner of the request or an admin can view it
+    if (req.user.role !== "admin" && req.user.id !== request.userId) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    res.status(200).json(request);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
