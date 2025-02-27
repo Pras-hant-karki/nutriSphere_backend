@@ -13,16 +13,17 @@ router.post("/login", userController.loginUser);
 // Get user profile
 router.get("/", verifyUser, userController.getUserProfile);
 
-
 router.get("/admin/dashboard", verifyUser, verifyAdmin, (req, res) => {
   res.json({ message: "Welcome, Admin!" });
 });
+
+// Get user info from user ID
+router.get("/:user_id", verifyUser, userController.getUserInfoById);
 
 // Update user profile
 router.put("/edit-profile", verifyUser, userController.updateUserProfile);
 
 // Upload image
 router.post("/uploadImage", verifyUser, upload, userController.uploadImage);
-
 
 module.exports = router;

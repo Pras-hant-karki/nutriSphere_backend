@@ -7,30 +7,28 @@ const upload = require("../middlewares/uploads");
 router
   .route("/")
   .get(postController.getAllPosts)
-  .post(verifyUser,verifyAdmin, postController.createPost)
+  .post(verifyUser, verifyAdmin, postController.createPost)
   .put((req, res) => res.status(405).json({ error: "Method not allowed" }))
   .delete((req, res) => res.status(405).json({ error: "Method not allowed" }));
 
 router.post(
   "/uploadPostCover",
-  verifyUser,verifyAdmin,
+  verifyUser,
+  verifyAdmin,
   upload,
   postController.uploadPostCover
 );
 
-
-
 // Get posts uploaded by current user
 router.get(
   "/my-posts",
-  verifyUser,verifyAdmin,
+  verifyUser,
+  verifyAdmin,
   postController.getPostsUploadedByCurrentUser
 );
 
-
-
 // Search posts
-router.get("/search",verifyUser, postController.searchPosts);
+router.get("/search", verifyUser, postController.searchPosts);
 
 router
   .route("/:post_id")
@@ -40,9 +38,5 @@ router
   })
   .put(postController.updatePostById)
   .delete(postController.deletePostById);
-
-
-
-
 
 module.exports = router;
