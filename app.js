@@ -21,12 +21,14 @@ app.use("/posts", verifyUser, posts_routes);
 app.use("/appointment", appointment_routes);
 app.use("/charges", charges_routes);
 app.use("/workout-requests", workoutRequestRoutes);
+const port = process.env.PORT;
 
 if (process.env.NODE_ENV !== "test") {
   sequelize
     .authenticate()
     .then(() => {
       console.log("Connected to PostgreSQL database server");
+      console.log(port)
       return sequelize.sync({ alter: true });
     })
     .then(() => {

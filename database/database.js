@@ -1,6 +1,6 @@
 const { Sequelize } = require("sequelize");
 
-const dbName = process.env.NODE_ENV === "test" ? "test_prashant" : "prashant";
+const dbName = process.env.NODE_ENV === "test" ? "prashant_test" : "prashant";
 
 const sequelize = new Sequelize(dbName, "postgres", "admin123", {
   host: "localhost",
